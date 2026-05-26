@@ -5,42 +5,9 @@
 0:00:00;labstreaminglayer;start
 0:00:00;labstreaminglayer;streamsession;True
 0:00:00;labstreaminglayer;marker;training_start
-0:00:00;labstreaminglayer;filename;chungus
-0:00:00;labstreaminglayer;recordinglocation;bingus/amongus
+0:00:00;labstreaminglayer;LSLfilename;chungus
+0:00:00;labstreaminglayer;recordinglocation;C:\Users\CNEL_Vega\Documents\GitHub\OpenMATB\sessions
 0:00:00;labstreaminglayer;startLSL
-
-    def createPort(self):
-        try:
-            self.socket = socket.create_connection(("localhost", self.parameters['socketnum']))
-            self.outlet = True
-            print('Successfully sees LSL Lab Recorder')
-        except:
-            print('Could not bind LSL Lab Recorder, no recording.')    
-    def startLSL(self) -> None:
-            if self.outlet:
-                s = self.socket
-                s.sendall(b"update\n")
-                s.sendall(b"select all\n")
-                print('Hhee')
-                sleep(0.2)
-                print('Hhee')
-                if self.parameters["filename"] != "":
-                    command = f"filename {{root:{self.parameters['recordinglocation']}}} {{template:{self.parameters['filename']}}}\n"
-                    print(f'Sending LSL setup {command}')
-                    s.sendall(command.encode('utf-8'))
-                    sleep(0.2)
-                sleep(0.2)
-                s.sendall(b"start\n")
-                print('started LSL')
-                self.state = True
-    def stopLSL(self) -> None:
-        if self.state:
-            if self.outlet:
-                s = self.socket
-                s.sendall(b"stop\n")
-                print('stopped LSL')
-            self.state = False
-
 0:00:00;photosensor;widthproportion;0.04
 0:00:00;photosensor;heightproportion;0.04
 0:00:00;photosensor;marginx;0.01
@@ -118,6 +85,6 @@
 
 0:02:30;photosensor;stop
 0:02:30;labstreaminglayer;marker;training_end
+0:02:30;labstreaminglayer;stopLSL
 0:02:30;labstreaminglayer;stop
 0:02:30;camera;stop
-0:02:30;labstreaminglayer;stopLSL
