@@ -21,6 +21,7 @@ class Event:
     @classmethod
     def parse_from_string(cls, line_id: int, line_str: str) -> Event:
         time_str, plugin, *command = line_str.strip().split(cls.sep)
+        #print(time_str)
         h, m, s = time_str.split(":")
         time_sec: int = int(h) * 3600 + int(m) * 60 + int(s)
         return cls(line_id, time_sec, plugin, command)

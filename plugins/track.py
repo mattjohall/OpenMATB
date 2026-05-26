@@ -26,7 +26,8 @@ class Track(AbstractPlugin):
             "cursorcolor": validation.is_color,
             "cursorcoloroutside": validation.is_color,
             "targetproportion": validation.is_in_unit_interval,
-            "joystickforce": validation.is_natural_integer,
+            "joystickforce": validation.is_positive_number,
+            "joystickdeadzone": validation.is_in_unit_interval,
             "inverseaxis": validation.is_boolean,
         }
 
@@ -37,6 +38,7 @@ class Track(AbstractPlugin):
             displayautomationstate=True,
             targetproportion=0.25,
             joystickforce=1,
+            joystickdeadzone=0.05,
             inverseaxis=False,
         )
         self.parameters.update(new_par)
@@ -79,8 +81,9 @@ class Track(AbstractPlugin):
 
     def get_joystick_inputs(self, x: float, y: float) -> None:
         # Called by the scheduler (which distribute joystick inputs to plugins) at each update
-        self.x_input = x
-        self.y_input = y
+        deadzone: float = self.parameters.get("joystickdeadzone", 0)
+        self.x_input = 0 if abs(x) < deadzone else x
+        self.y_input = 0 if abs(y) < deadzone else y
 
     def compute_next_plugin_state(self) -> None:
         if not super().compute_next_plugin_state():

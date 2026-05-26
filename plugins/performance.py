@@ -24,6 +24,8 @@ class Performance(AbstractPlugin):
             "shadowundercritical": validation.is_boolean,
             "defaultcolor": validation.is_color,
             "criticalcolor": validation.is_color,
+            "streamintervalsec": validation.is_natural_integer,
+            "loadlevel": validation.is_string,
         }
 
         new_par: dict[str, Any] = dict(
@@ -34,6 +36,8 @@ class Performance(AbstractPlugin):
             shadowundercritical=True,
             defaultcolor=C["GREEN"],
             criticalcolor=C["RED"],
+            streamintervalsec=0,
+            loadlevel="",
         )
         self.parameters.update(new_par)
 
@@ -43,6 +47,7 @@ class Performance(AbstractPlugin):
         self.plugins: dict[str, Any] | None = None
         self.performance_levels: dict[str, float] = dict()
         self.under_critical: bool | None = None
+        self.next_stream_time: float = 0
 
     def on_scenario_loaded(self, scenario: Any) -> None:
         self.plugins = scenario.plugins
@@ -132,6 +137,26 @@ class Performance(AbstractPlugin):
             self.displayed_level = self.parameters["criticallevel"]
         else:
             self.displayed_level = self.current_level
+
+        self.stream_lsl_state()
+
+    def stream_lsl_state(self) -> None:
+        interval_sec: int = self.parameters["streamintervalsec"]
+        if interval_sec <= 0 or self.scenario_time < self.next_stream_time:
+            return
+
+        scenario: Any | None = getattr(self, "scenario", None)
+        if scenario is None:
+            return
+
+        lsl = scenario.plugins.get("labstreaminglayer")
+        if lsl is None or lsl.stream_outlet is None:
+            return
+
+        lsl.push(f"perf_relative|{round(self.current_level, 3)}")
+        if self.parameters["loadlevel"] != "":
+            lsl.push(f"load_estimated|{self.parameters['loadlevel']}")
+        self.next_stream_time = self.scenario_time + interval_sec
 
     def refresh_widgets(self) -> None:
         if not super().refresh_widgets():

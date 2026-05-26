@@ -1,0 +1,12 @@
+<h1>Resource Management Practice</h1>
+<p>For the next 30 seconds, only the resource management task will be active.</p>
+<p>Num Keys 1-7 control a variety of tanks. Fuel flows in the direction of the arrow.</p>
+<p>The top tanks are your flight tanks and should be kept within the black markers.</p>
+<p><img src=Resmon.png></p>
+<p>Press SPACE to continue.</p>
+<newpage>
+<p>The leftmost and right most tanks are high flow but will empty quickly.</p>
+<p>The bottom innermost left and right tanks are low flow but do not run out of fuel.</p>
+<p>Pumps are green when turned on but may fail (red) and be unusable for a time.</p>
+<p><img src=Resmonfail.png></p>
+<p>Press SPACE to continue.</p>

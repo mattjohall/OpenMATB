@@ -11,7 +11,15 @@ from core.widgets.abstractwidget import *
 
 
 class Scale(AbstractWidget):
-    def __init__(self, name: str, container: Any, label: str, arrow_position: int = 5) -> None:
+    def __init__(
+        self,
+        name: str,
+        container: Any,
+        label: str,
+        arrow_position: int = 5,
+        upper_alert_position: int = 2,
+        lower_alert_position: int = 8,
+    ) -> None:
         super().__init__(name, container)
 
         self.background_color: tuple[int, int, int] = (255, 255, 255)
@@ -22,6 +30,8 @@ class Scale(AbstractWidget):
             self.container.b + (self.container.h / 11) * i + self.container.h / 22 for i in range(11)
         ]
         self.position: int = 5
+        self.upper_alert_position: int = upper_alert_position
+        self.lower_alert_position: int = lower_alert_position
 
         # Compute vertices
         self.vertex["label"] = Label(
@@ -52,10 +62,19 @@ class Scale(AbstractWidget):
         self.arrow_x_offset: float = 0.22 * self.container.w  # So the arrow does not stick to
         # the right side of the scale
         self.feedback_height: float = 0.12 * self.container.h
+        self.alert_line_width: float = self.container.w * 0.55
 
         self.add_lines("ticks", G(self.m_draw + 3), v, C["BLACK"] * (len(v) // 2))
+        self.add_lines("alerts", G(self.m_draw + 2), self.get_alert_vertices(), C["RED"] * 4)
         self.add_quad("feedback", G(self.m_draw + 2), (0, 0, 0, 0, 0, 0, 0, 0), C["GREEN"] * 4)
         self.add_triangles("arrow", G(self.m_draw + 2), self.return_arrow_vertice(arrow_position), C["BLACK"] * 3)
+
+    def get_alert_vertices(self) -> tuple[float, ...]:
+        left: float = self.container.x2 - self.alert_line_width
+        right: float = self.container.x2
+        upper_y: float = self.positions[self.upper_alert_position]
+        lower_y: float = self.positions[self.lower_alert_position]
+        return (left, upper_y, right, upper_y, left, lower_y, right, lower_y)
 
     def return_arrow_vertice(self, position: int) -> tuple[float, ...]:
         xo: float = self.arrow_x_offset

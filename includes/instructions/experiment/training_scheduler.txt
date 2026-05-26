@@ -1,0 +1,14 @@
+<h1>Scheduling Preview</h1>
+<p>This panel shows incoming task periods over time.</p>
+<p>It gives a short preview of when different tasks are expected to become active.</p>
+
+<p>The S - System monitoring task will have you responding to buttons randomly changing state.</p>
+
+<p>The T - Tracking task will have you maintaining a drifting cross cursor.</p>
+
+<p>The C - Communications radio will have you adjust a radio to frequencies.</p>
+
+<p>The R - Resource management will have you adjust fuel tanks within a goal zone.</p>
+
+<p><img src=schedule.png></p>
+<p>Press SPACE for an example of the tracking task.</p>

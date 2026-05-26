@@ -93,6 +93,20 @@ def is_positive_float(x: str) -> ValidationResult:
         return None, msg
 
 
+def is_positive_number(x: str) -> ValidationResult:
+    msg: str = _("should be a positive number (not %s)") % x
+    try:
+        x = eval(x)
+        x = float(x)
+    except (NameError, SyntaxError, TypeError, ValueError):
+        return None, msg
+    else:
+        if x > 0:
+            return x, None
+        else:
+            return None, msg
+
+
 def is_in_list(x: str, li: list[str]) -> ValidationResult:
     # Turn x into a list
     x = [str(el) for el in x.split(",")] if "," in x else [x]

@@ -1,0 +1,47 @@
+{
+  "scenario_name": "three_load_levels",
+  "events_refractory_duration": 1,
+  "communications_target_ratio": 0.5,
+  "average_auditory_prompt_duration": 13,
+  "blocks": [
+    {
+      "duration_sec": 300,
+      "plugins": {
+        "track": 0.25,
+        "sysmon": 0.25,
+        "communications": 0.25,
+        "resman": 0.25,
+        "scheduling": 0.25
+      },
+      "extra_events": []
+    },
+    {
+      "duration_sec": 60,
+      "plugins": {},
+      "extra_events": []
+    },
+    {
+      "duration_sec": 300,
+      "plugins": {
+        "track": 0.55,
+        "sysmon": 0.55,
+        "communications": 0.55,
+        "resman": 0.55,
+        "scheduling": 0.55
+      },
+      "extra_events": []
+    }
+  ],
+  "inter_block_events": [
+    {
+      "type": "instructions",
+      "filename": "includes\\instructions\\default\\full.txt",
+      "position": 0
+    },
+    {
+      "type": "instructions",
+      "filename": "includes\\instructions\\default\\full.txt",
+      "position": 1
+    }
+  ]
+}

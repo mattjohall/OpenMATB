@@ -10,14 +10,24 @@ import gettext
 import sys
 from pathlib import Path
 
+
+def get_config_path() -> Path:
+    if "--config" in sys.argv:
+        config_index: int = sys.argv.index("--config")
+        if config_index + 1 < len(sys.argv):
+            return Path(sys.argv[config_index + 1])
+    return Path("config.ini")
+
+
 # Read and install the specified language iso
 # The LOCALE_PATH constant can't be set into constants.py because
 # the latter must be translated itself
 LOCALE_PATH: Path = Path(".", "locales")
+CONFIG_PATH: Path = get_config_path()
 
 # Only language is accessed manually from the config.ini to avoid circular imports
 # (i.e., utils needing translation needing utils and so on)
-with open("config.ini", "r") as f:
+with open(CONFIG_PATH, "r") as f:
     language_iso: str = [l for l in f.readlines() if "language=" in l][0].split("=")[-1].strip()
 language: gettext.GNUTranslations = gettext.translation("openmatb", LOCALE_PATH, [language_iso])
 language.install()

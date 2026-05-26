@@ -1,0 +1,4 @@
+<h1>Full Battery</h1>
+<p>This run starts with the <strong>high-load</strong> block and then moves to the low-load block.</p>
+<p>Each 5 minute block begins with a 30 second baseline period before the task load changes.</p>
+<p>Press SPACE when you are ready to begin the trial.</p>

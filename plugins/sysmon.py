@@ -9,7 +9,7 @@ from typing import Any, Callable
 from core import validation
 from core.constants import COLORS as C
 from core.container import Container
-from core.pseudorandom import choice, sample
+from core.pseudorandom import choice
 from core.widgets import Light, Scale
 from plugins.abstractplugin import AbstractPlugin
 
@@ -23,6 +23,7 @@ class Sysmon(AbstractPlugin):
             "automaticsolverdelay": validation.is_positive_integer,
             "allowanykey": validation.is_boolean,
             "lights-1-name": validation.is_string,
+            "lights-1-enabled": validation.is_boolean,
             "lights-1-failure": validation.is_boolean,
             "lights-1-on": validation.is_boolean,
             "lights-1-default": (validation.is_in_list, ["on", "off"]),
@@ -30,6 +31,7 @@ class Sysmon(AbstractPlugin):
             "lights-1-key": validation.is_key,
             "lights-1-onfailure": validation.is_boolean,
             "lights-2-name": validation.is_string,
+            "lights-2-enabled": validation.is_boolean,
             "lights-2-failure": validation.is_boolean,
             "lights-2-on": validation.is_boolean,
             "lights-2-default": (validation.is_in_list, ["on", "off"]),
@@ -37,28 +39,33 @@ class Sysmon(AbstractPlugin):
             "lights-2-key": validation.is_key,
             "lights-2-onfailure": validation.is_boolean,
             "scales-1-name": validation.is_string,
+            "scales-1-enabled": validation.is_boolean,
             "scales-1-failure": validation.is_boolean,
             "scales-1-side": (validation.is_in_list, ["-1", "0", "1"]),
             "scales-1-key": validation.is_key,
             "scales-1-onfailure": validation.is_boolean,
             "scales-2-name": validation.is_string,
+            "scales-2-enabled": validation.is_boolean,
             "scales-2-failure": validation.is_boolean,
             "scales-2-side": (validation.is_in_list, ["-1", "0", "1"]),
             "scales-2-key": validation.is_key,
             "scales-2-onfailure": validation.is_boolean,
             "scales-3-name": validation.is_string,
+            "scales-3-enabled": validation.is_boolean,
             "scales-3-failure": validation.is_boolean,
             "scales-3-side": (validation.is_in_list, ["-1", "0", "1"]),
             "scales-3-key": validation.is_key,
             "scales-3-onfailure": validation.is_boolean,
             "scales-4-name": validation.is_string,
+            "scales-4-enabled": validation.is_boolean,
             "scales-4-failure": validation.is_boolean,
             "scales-4-side": (validation.is_in_list, ["-1", "0", "1"]),
             "scales-4-key": validation.is_key,
             "scales-4-onfailure": validation.is_boolean,
+            "scaledriftintervalms": validation.is_positive_integer,
         }
 
-        self.keys: set[str] = {"F1", "F2", "F3", "F4", "F5", "F6"}
+        self.keys: set[str] = set()
         self.moving_seed: int = 1  # Useful for pseudorandom generation of
         # multiple values at once (arrows move)
 
@@ -68,25 +75,41 @@ class Sysmon(AbstractPlugin):
             automaticsolverdelay=1000,
             displayautomationstate=True,
             allowanykey=False,
+            scaledriftintervalms=600,
             feedbackduration=1500,
             feedbacks=dict(positive=dict(active=True, color=C["GREEN"]), negative=dict(active=True, color=C["RED"])),
             lights=dict(
                 [
-                    ("1", dict(name="F5", failure=False, default="on", oncolor=C["GREEN"], key="F5", on=True)),
-                    ("2", dict(name="F6", failure=False, default="off", oncolor=C["RED"], key="F6", on=False)),
+                    (
+                        "1",
+                        dict(name="F5", enabled=True, failure=False, default="on", oncolor=C["GREEN"], key="F5", on=True),
+                    ),
+                    (
+                        "2",
+                        dict(
+                            name="F6",
+                            enabled=True,
+                            failure=False,
+                            default="off",
+                            oncolor=C["RED"],
+                            key="F6",
+                            on=False,
+                        ),
+                    ),
                 ]
             ),
             scales=dict(
                 [
-                    ("1", dict(name="F1", failure=False, side=0, key="F1")),
-                    ("2", dict(name="F2", failure=False, side=0, key="F2")),
-                    ("3", dict(name="F3", failure=False, side=0, key="F3")),
-                    ("4", dict(name="F4", failure=False, side=0, key="F4")),
+                    ("1", dict(name="F1", enabled=True, failure=False, side=0, key="F1")),
+                    ("2", dict(name="F2", enabled=True, failure=False, side=0, key="F2")),
+                    ("3", dict(name="F3", enabled=True, failure=False, side=0, key="F3")),
+                    ("4", dict(name="F4", enabled=True, failure=False, side=0, key="F4")),
                 ]
             ),
         )
 
         self.parameters.update(new_par)
+        self._refresh_keys()
 
         # Add private parameters
         # to any gauge
@@ -95,7 +118,7 @@ class Sysmon(AbstractPlugin):
 
         # and to scale only
         for gauge in self.get_scale_gauges():
-            gauge.update({"_pos": 5, "_zone": 0, "_feedbacktimer": None, "_feedbacktype": None})
+            gauge.update({"_pos": 5, "_zone": 0, "_feedbacktimer": None, "_feedbacktype": None, "_nextdrifttime": 0})
 
         self.automode_position: tuple[float, float] = (0.5, 0.05)
         self.scale_zones: dict[int, list[int]] = {1: list(range(3)), 0: list(range(3, 8)), -1: list(range(8, 11))}
@@ -114,11 +137,14 @@ class Sysmon(AbstractPlugin):
         light_b: float = self.task_container.b + self.task_container.h * 0.75
         light_h: float = self.task_container.h * 0.15
 
-        for scale_n, scale in self.parameters["scales"].items():
+        enabled_scales: list[tuple[str, dict[str, Any]]] = [
+            (scale_n, scale) for scale_n, scale in self.parameters["scales"].items() if self.is_gauge_enabled(scale)
+        ]
+        for index, (scale_n, scale) in enumerate(enabled_scales, start=1):
             scale_l: float = (
                 self.task_container.l
-                + (self.task_container.w / 4) * (int(scale_n) - 1)
-                + self.task_container.w / 8
+                + (self.task_container.w / len(enabled_scales)) * (index - 1)
+                + self.task_container.w / (2 * len(enabled_scales))
                 - scale_w / 2
             )
             scale_container: Container = Container(f"scale_{scale_n}", scale_l, scale_b, scale_w, scale_h)
@@ -131,11 +157,14 @@ class Sysmon(AbstractPlugin):
                 arrow_position=scale["_pos"],
             )
 
-        for light_n, light in self.parameters["lights"].items():
+        enabled_lights: list[tuple[str, dict[str, Any]]] = [
+            (light_n, light) for light_n, light in self.parameters["lights"].items() if self.is_gauge_enabled(light)
+        ]
+        for index, (light_n, light) in enumerate(enabled_lights, start=1):
             light_l: float = (
                 self.task_container.l
-                + (self.task_container.w / 2) * (int(light_n) - 1)
-                + self.task_container.w / 4
+                + (self.task_container.w / len(enabled_lights)) * (index - 1)
+                + self.task_container.w / (2 * len(enabled_lights))
                 - light_w / 2
             )
             light_container: Container = Container(f"light_{light_n}", light_l, light_b, light_w, light_h)
@@ -172,27 +201,21 @@ class Sysmon(AbstractPlugin):
 
         # Compute arrows next position
         for _scale_n, scale in self.parameters["scales"].items():
-            self.moving_seed += 1
-            # Manage the case where the arrow must change its zone
-            if scale["_pos"] not in self.scale_zones[scale["_zone"]]:
-                scale["_pos"] = sample(
-                    self.scale_zones[scale["_zone"]], self.alias, self.scenario_time, self.moving_seed
-                )
-            else:  # Move into a delimited zone
-                direction: int = sample([-1, 1], self.alias, self.scenario_time, self.moving_seed)
-                if scale["_pos"] + direction in self.scale_zones[scale["_zone"]]:
-                    scale["_pos"] += direction
-                else:
-                    scale["_pos"] -= direction
-
-            # If the gauge freeze timer is not null, freeze its arrow (pos = )
             if scale["_freezetimer"] is not None and isinstance(scale["_freezetimer"], int):
                 scale["_freezetimer"] -= self.parameters["taskupdatetime"]
                 if scale["_freezetimer"] > 0:
-                    # Here, freeze position
-                    scale["_pos"] = 5  # TODO: Check central scale value
+                    scale["_pos"] = 5
                 else:
                     scale["_freezetimer"] = None
+            elif scale["_onfailure"]:
+                if self.scenario_time >= scale["_nextdrifttime"]:
+                    if scale["_zone"] == 1:
+                        scale["_pos"] = max(0, scale["_pos"] - 1)
+                    elif scale["_zone"] == -1:
+                        scale["_pos"] = min(10, scale["_pos"] + 1)
+                    scale["_nextdrifttime"] = self.scenario_time + (self.parameters["scaledriftintervalms"] / 1000)
+            else:
+                scale["_pos"] = 5
 
         # Check for failure
         for gauge in self.get_gauges_key_value("failure", True):
@@ -234,9 +257,10 @@ class Sysmon(AbstractPlugin):
             else:  # Scale case
                 if gauge["side"] not in [-1, 1]:
                     add: str | None = self.get_gauge_key(gauge)  # Specify a gauge integer to generate
-                    # a unique seed
                     gauge["side"] = choice([-1, 1], self.alias, self.scenario_time, int(add))
                 gauge["_zone"] = gauge["side"]
+                gauge["_pos"] = 5
+                gauge["_nextdrifttime"] = self.scenario_time
         gauge["failure"] = False
 
         # Schedule failure timing
@@ -284,6 +308,7 @@ class Sysmon(AbstractPlugin):
             gauge["on"] = gauge["default"] == "on"
         else:  # Scale case
             gauge["_zone"] = 0
+            gauge["_nextdrifttime"] = 0
         gauge["_milliresponsetime"] = 0
 
     def get_gauges_key_value(self, key: str, value: Any) -> list[dict[str, Any]]:
@@ -294,7 +319,10 @@ class Sysmon(AbstractPlugin):
         return gauge_list
 
     def get_gauge_by_key(self, key: str) -> dict[str, Any]:
-        return self.get_gauges_key_value("key", key)[0]
+        gauges: list[dict[str, Any]] = self.get_gauges_key_value("key", key)
+        if len(gauges) == 0:
+            raise KeyError(key)
+        return gauges[0]
 
     def get_gauge_key(self, gauge: dict[str, Any]) -> str | None:
         for key in ["lights", "scales"]:
@@ -306,10 +334,10 @@ class Sysmon(AbstractPlugin):
         return self.get_gauges_key_value("_onfailure", True)
 
     def get_scale_gauges(self) -> list[dict[str, Any]]:
-        return [g for _, g in self.parameters["scales"].items()]
+        return [g for _, g in self.parameters["scales"].items() if self.is_gauge_enabled(g)]
 
     def get_light_gauges(self) -> list[dict[str, Any]]:
-        return [g for _, g in self.parameters["lights"].items()]
+        return [g for _, g in self.parameters["lights"].items() if self.is_gauge_enabled(g)]
 
     def get_all_gauges(self) -> list[dict[str, Any]]:
         return [g for g in self.get_scale_gauges() + self.get_light_gauges()]
@@ -326,7 +354,10 @@ class Sysmon(AbstractPlugin):
             return
 
         if state == "press":
-            gauge: dict[str, Any] = self.get_gauge_by_key(key)
+            try:
+                gauge: dict[str, Any] = self.get_gauge_by_key(key)
+            except KeyError:
+                return
             if key in [g["key"] for g in self.get_gauges_on_failure()]:
                 self.stop_failure(gauge=gauge, success=True)
             else:
@@ -337,3 +368,16 @@ class Sysmon(AbstractPlugin):
                 # Set a negative feedback if relevant
                 if self.parameters["feedbacks"]["negative"]["active"]:
                     self.set_scale_feedback(gauge, "negative")
+
+    def is_gauge_enabled(self, gauge: dict[str, Any]) -> bool:
+        return gauge.get("enabled", True)
+
+    def _refresh_keys(self) -> None:
+        self.keys = {gauge["key"] for gauge in self.parameters["scales"].values() if self.is_gauge_enabled(gauge)}
+        self.keys.update({gauge["key"] for gauge in self.parameters["lights"].values() if self.is_gauge_enabled(gauge)})
+
+    def set_parameter(self, keys_str: str, value: Any) -> dict[str, Any]:
+        result: dict[str, Any] = super().set_parameter(keys_str, value)
+        if keys_str.endswith("-enabled") or keys_str.endswith("-key"):
+            self._refresh_keys()
+        return result

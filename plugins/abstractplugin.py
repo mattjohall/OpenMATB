@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from pyglet.window import key as winkey
@@ -418,6 +419,7 @@ class BlockingPlugin(AbstractPlugin):
 
         self.input_path: Path | None = None
         self.folder: str | None = None  # Depends on the nature of blocking plugin (questionnaire, instruction...)
+        self.slide_display_start: float | None = None
 
         # Should we stop the plugin when the are no more slide available
         # (Useful for the LSL plugin, which has a starting instruction, but
@@ -452,20 +454,37 @@ class BlockingPlugin(AbstractPlugin):
 
     def update(self, dt: float) -> None:
         super().update(dt)
+        if (
+            self.slide_display_start is not None
+            and self.parameters["maxdurationsec"] > 0
+            and perf_counter() - self.slide_display_start >= self.parameters["maxdurationsec"]
+        ):
+            self.go_to_next_slide = True
+
         if self.go_to_next_slide:
             self.go_to_next_slide = False
             if len(self.slides) > 0:  # Are there remaining slides ?
                 self.hide()  # If so retrieve the next slide and show it
+                self.clear_slide_widgets()
                 self.current_slide = self.slides[0]
                 del self.slides[0]
                 self.make_slide_graphs()
                 self.show()
+                self.slide_display_start = perf_counter()
             else:
+                self.slide_display_start = None
                 if self.stop_on_end:
                     self.stop()
                 else:
                     self.hide()
                     self.blocking = False
+
+    def clear_slide_widgets(self) -> None:
+        for name in [k for k in list(self.widgets.keys()) if not k.endswith("_background")]:
+            widget = self.widgets[name]
+            widget.hide()
+            widget.empty_batch()
+            del self.widgets[name]
 
     def make_slide_graphs(self) -> None:
         # Extract the title from the slide string if relevant
@@ -517,7 +536,8 @@ class BlockingPlugin(AbstractPlugin):
             return
 
         # Waiting for the key release to advance one slide at the time
-        if keystr.lower() == "space" and state == "release":
+        configured_key: str = str(self.parameters["response"]["key"]).upper()
+        if keystr.upper() == configured_key and state == "release":
             self.go_to_next_slide = True
 
         return keystr

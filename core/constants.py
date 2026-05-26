@@ -48,6 +48,15 @@ PATHS.update(
 [path.mkdir(parents=False, exist_ok=True) for p, path in PATHS.items() if path.exists() is False]
 PATHS["SCENARIO_ERRORS"] = Path(".", "last_scenario_errors.log")
 
+
+def get_config_path() -> Path:
+    if "--config" in sys.argv:
+        config_index: int = sys.argv.index("--config")
+        if config_index + 1 < len(sys.argv):
+            return Path(sys.argv[config_index + 1])
+    return PATHS["PLUGINS"].parent.joinpath("config.ini")
+
+
 # Read the configuration file
 CONFIG: configparser.ConfigParser = configparser.ConfigParser()
-CONFIG.read(PATHS["PLUGINS"].parent.joinpath("config.ini"))
+CONFIG.read(get_config_path())

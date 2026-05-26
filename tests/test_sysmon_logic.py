@@ -38,6 +38,7 @@ def _make_sysmon(**overrides):
         lights={
             "1": dict(
                 name="F5",
+                enabled=True,
                 failure=False,
                 default="on",
                 oncolor=C["GREEN"],
@@ -50,6 +51,7 @@ def _make_sysmon(**overrides):
             ),
             "2": dict(
                 name="F6",
+                enabled=True,
                 failure=False,
                 default="off",
                 oncolor=C["RED"],
@@ -64,6 +66,7 @@ def _make_sysmon(**overrides):
         scales={
             "1": dict(
                 name="F1",
+                enabled=True,
                 failure=False,
                 side=0,
                 key="F1",
@@ -78,6 +81,7 @@ def _make_sysmon(**overrides):
             ),
             "2": dict(
                 name="F2",
+                enabled=True,
                 failure=False,
                 side=0,
                 key="F2",
@@ -92,6 +96,7 @@ def _make_sysmon(**overrides):
             ),
             "3": dict(
                 name="F3",
+                enabled=True,
                 failure=False,
                 side=0,
                 key="F3",
@@ -106,6 +111,7 @@ def _make_sysmon(**overrides):
             ),
             "4": dict(
                 name="F4",
+                enabled=True,
                 failure=False,
                 side=0,
                 key="F4",
@@ -449,6 +455,24 @@ class TestGaugeHelpers:
         s = _make_sysmon()
         light = s.parameters["lights"]["1"]
         assert s.get_gauge_key(light) == "1"
+
+    def test_disabled_scale_is_excluded_from_counts(self):
+        """Disabling scale 4 removes it from active gauge helpers."""
+        s = _make_sysmon()
+        s.parameters["scales"]["4"]["enabled"] = False
+        assert len(s.get_scale_gauges()) == 3
+        assert len(s.get_all_gauges()) == 5
+
+    def test_disabled_scale_key_is_ignored(self):
+        """Disabled gauges are no longer returned by key lookup."""
+        s = _make_sysmon()
+        s.parameters["scales"]["4"]["enabled"] = False
+        try:
+            s.get_gauge_by_key("F4")
+        except KeyError:
+            pass
+        else:
+            raise AssertionError("Disabled gauge key should not be resolved")
 
 
 # ──────────────────────────────────────────────

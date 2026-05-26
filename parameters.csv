@@ -41,6 +41,7 @@ sysmon,scales-3-failure,Set this to True if you want to trigger a failure,(boole
 sysmon,scales-3-side,"To which side trigger the failure? (0:random, 1:up, -1:down)","-1, 0, 1",0
 sysmon,scales-3-key,Keyboard key to resolve a failure,(keyboard key),F3
 sysmon,scales-4-name,Name of the scale #4,(string),F4
+sysmon,scaledriftintervalms,Delay between each step of scale failure drift in milliseconds,(positive integer),600
 sysmon,scales-4-failure,Set this to True if you want to trigger a failure,(boolean),False
 sysmon,scales-4-side,"To which side trigger the failure? (0:random, 1:up, -1:down)","-1, 0, 1",0
 sysmon,scales-4-key,Keyboard key to resolve a failure,(keyboard key),F4
@@ -52,7 +53,8 @@ track,cursorcoloroutside,Color of the moving cursor when outside the target area
 track,automaticsolver,"When True, the cursor movement is automatically compensated toward the center",(boolean),False
 track,displayautomationstate,"If True, the current automation state (MANUAL vs AUTO ON) of the task is displayed.",(boolean),True
 track,targetproportion,Radius proportion of the target area. 0.1 means that the radius of the target area is 10% of the task total width. 0 means no target area at all.,(unit_interval=[0:1]),0.25
-track,joystickforce,"The smaller this factor, the more the joystick movement is attenuated. Greater values leads to a more sensitive joystick.",(integer),1
+track,joystickforce,"The smaller this factor, the more the joystick movement is attenuated. Greater values leads to a more sensitive joystick.",(positive number),1
+track,joystickdeadzone,Joystick inputs whose absolute value stays below this threshold are ignored to reduce center drift,(unit_interval=[0:1]),0.05
 track,inverseaxis,Set this to True if joystick actions should be inverted,(boolean),False
 scheduling,title,"Title of the task, displayed if the plugin is visible",(string),Scheduling
 scheduling,taskplacement,Task location in a 3x2 canvas,"`topleft`, `topmid`, `topright`, `bottomleft`, `bottommid`, `bottomright`, `fullscreen`",topright
@@ -129,41 +131,41 @@ resman,tank-f-depletable,Is this tank depletable (False=infinite resource),(bool
 resman,tank-f-lossperminute,Volume lost (leak) in a minute,(positive integer),0
 resman,pump-1-flow,Pump debit per minute,(positive integer),800
 resman,pump-1-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-1-key,Keyboard key to toggle the pump,(keyboard key),NUM_1
+resman,pump-1-key,Keyboard or joystick key to toggle the pump,(key),NUM_1
 resman,pump-2-flow,Pump debit per minute,(positive integer),600
 resman,pump-2-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-2-key,Keyboard key to toggle the pump,(keyboard key),NUM_2
+resman,pump-2-key,Keyboard or joystick key to toggle the pump,(key),NUM_2
 resman,pump-3-flow,Pump debit per minute,(positive integer),800
 resman,pump-3-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-3-key,Keyboard key to toggle the pump,(keyboard key),NUM_3
+resman,pump-3-key,Keyboard or joystick key to toggle the pump,(key),NUM_3
 resman,pump-4-flow,Pump debit per minute,(positive integer),600
 resman,pump-4-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-4-key,Keyboard key to toggle the pump,(keyboard key),NUM_4
+resman,pump-4-key,Keyboard or joystick key to toggle the pump,(key),NUM_4
 resman,pump-5-flow,Pump debit per minute,(positive integer),600
 resman,pump-5-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-5-key,Keyboard key to toggle the pump,(keyboard key),NUM_5
+resman,pump-5-key,Keyboard or joystick key to toggle the pump,(key),NUM_5
 resman,pump-6-flow,Pump debit per minute,(positive integer),600
 resman,pump-6-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-6-key,Keyboard key to toggle the pump,(keyboard key),NUM_6
+resman,pump-6-key,Keyboard or joystick key to toggle the pump,(key),NUM_6
 resman,pump-7-flow,Pump debit per minute,(positive integer),400
 resman,pump-7-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-7-key,Keyboard key to toggle the pump,(keyboard key),NUM_7
+resman,pump-7-key,Keyboard or joystick key to toggle the pump,(key),NUM_7
 resman,pump-8-flow,Pump debit per minute,(positive integer),400
 resman,pump-8-state,Current state of the pump,`on` or `off` or `failure`,off
-resman,pump-8-key,Keyboard key to toggle the pump,(keyboard key),NUM_8
+resman,pump-8-key,Keyboard or joystick key to toggle the pump,(key),NUM_8
 instructions,title,"Title of the task, displayed if the plugin is visible",(string),Instructions
 instructions,taskplacement,Task location in a 3x2 canvas,"`topleft`, `topmid`, `topright`, `bottomleft`, `bottommid`, `bottomright`, `fullscreen`",fullscreen
 instructions,taskupdatetime,Delay between plugin updates (ms),(positive integer),15
 instructions,filename,Name of the instructions file to use,(string),(empty)
 instructions,response-text,String chain to prompt the subject to press a continuing key,(string),'Press SPACE to continue’
-instructions,response-key,Keyboard key to continue,(keyboard key),space
+instructions,response-key,Keyboard or joystick key to continue,(key),space
 instructions,maxdurationsec,Maximum displaying duration (seconds),(positive integer),0
 genericscales,title,"Title of the task, displayed if the plugin is visible",(string),Generic scales
 genericscales,taskplacement,Task location in a 3x2 canvas,"`topleft`, `topmid`, `topright`, `bottomleft`, `bottommid`, `bottomright`, `fullscreen`",fullscreen
 genericscales,taskupdatetime,Delay between plugin updates (ms),(positive integer),15
 genericscales,filename,Name of the instructions file to use,(string),(empty)
 genericscales,response-text,String chain to prompt the subject to press a continuing key,(string),'Press SPACE to validate’
-genericscales,response-key,Keyboard key to continue,(keyboard key),space
+genericscales,response-key,Keyboard or joystick key to continue,(key),space
 performance,title,"Title of the task, displayed if the plugin is visible",(string),Performance
 performance,taskplacement,Task location in a 3x2 canvas,"`topleft`, `topmid`, `topright`, `bottomleft`, `bottommid`, `bottomright`, `fullscreen`",topright
 performance,taskupdatetime,Delay between plugin updates (ms),(positive integer),50
@@ -174,6 +176,16 @@ performance,criticallevel,Level below which performance is considered critical,(
 performance,shadowundercritical,Should the performance level be shadowed when under criticallevel?,(boolean),True
 performance,defaultcolor,Color of the fluctuating performance bar,"`white`, `black`, `green`, `red`, `background`, `lightgrey`, `grey`, `blue`",green
 performance,criticalcolor,Color of the performance bar when performance is critical,"`white`, `black`, `green`, `red`, `background`, `lightgrey`, `grey`, `blue`",red
+performance,streamintervalsec,If greater than 0 send periodic LSL performance markers every N seconds,(natural integer),0
+performance,loadlevel,Free-text load label to emit alongside periodic LSL performance markers,(string),(empty)
+photosensor,widthproportion,Width of the photosensor square relative to the full screen,(unit_interval=[0:1]),0.05
+photosensor,heightproportion,Height of the photosensor square relative to the full screen,(unit_interval=[0:1]),0.05
+photosensor,marginx,Horizontal margin from the left edge of the full screen,(unit_interval=[0:1]),0.0
+photosensor,marginy,Vertical margin from the top edge of the full screen,(unit_interval=[0:1]),0.0
+photosensor,flashdurationms,Flash duration in milliseconds,(natural integer),100
+photosensor,color,Square color,"`white`, `black`, `green`, `red`, `background`, `lightgrey`, `grey`, `blue`",lightgrey
+photosensor,onmarker,LSL marker sent when the photosensor square turns on,(string),ps_on
+photosensor,offmarker,LSL marker sent when the photosensor square turns off,(string),ps_off
 labstreaminglayer,marker,Set this parameter with a string chain to send it through LSL,(string),(empty)
 labstreaminglayer,streamsession,Should the whole session log be streamed through LSL?,(boolean),False
 labstreaminglayer,pauseatstart,"Should a pause screen be proposed at LSL start, to allow the user to add the stream in the LabRecorder?",(boolean),False

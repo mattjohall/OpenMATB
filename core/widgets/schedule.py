@@ -83,6 +83,10 @@ class Schedule(AbstractWidget):
             start, end = segment_sec
             y1: float = self.sec_to_y(start, max_sec)
             y2: float = self.sec_to_y(end, max_sec)
+            y1 = max(min(y1, self.container.y1), self.container.y2)
+            y2 = max(min(y2, self.container.y1), self.container.y2)
+            if y1 == y2:
+                continue
             v.extend(
                 [
                     self.container.cx - x_radius,
@@ -95,9 +99,9 @@ class Schedule(AbstractWidget):
                     y2,
                 ]
             )
-            self.resize_quad(time_mode, len(v) // 2)
-            self.on_batch[time_mode].position[:] = v
-            self.on_batch[time_mode].colors[:] = list(color) * (len(v) // 2)
+        self.resize_quad(time_mode, len(v) // 2)
+        self.on_batch[time_mode].position[:] = v
+        self.on_batch[time_mode].colors[:] = list(color) * (len(v) // 2)
 
     def update(self) -> None:
         if self.visible:

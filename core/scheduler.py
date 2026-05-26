@@ -54,6 +54,7 @@ class Scheduler:
         for p in self.plugins:
             self.plugins[p].win = Window.MainWindow
             self.plugins[p].joystick = self.joystick
+            self.plugins[p].scenario = self.scenario
             if not REPLAY_MODE:
                 Window.MainWindow.push_handlers(self.plugins[p].on_key_press, self.plugins[p].on_key_release)
 

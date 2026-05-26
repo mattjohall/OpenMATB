@@ -25,6 +25,17 @@ class Instructions(BlockingPlugin):
         )
         self.parameters.update(new_par)
 
+    def start(self) -> None:
+        super().start()
+        scenario: Any | None = getattr(self, "scenario", None)
+        if scenario is None:
+            return
+
+        lsl = scenario.plugins.get("labstreaminglayer")
+        filename: str | None = self.parameters["filename"]
+        if lsl is not None and lsl.stream_outlet is not None and filename is not None:
+            lsl.push(f"instructions_file|{filename}")
+
     def make_slide_graphs(self) -> None:
         super().make_slide_graphs()
         self.add_widget(

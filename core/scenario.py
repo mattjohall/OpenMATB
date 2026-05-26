@@ -286,6 +286,6 @@ global_validation_dict: dict[str, Any] = {
     "pointsize": validation.is_natural_integer,
     "maxdurationsec": validation.is_natural_integer,
     "response-text": validation.is_string,
-    "response-key": validation.is_keyboard_key,
+    "response-key": validation.is_key,
     "allowkeypress": validation.is_boolean,
 }

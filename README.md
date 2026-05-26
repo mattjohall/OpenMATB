@@ -106,6 +106,33 @@ A scenario is a text file which specifies, for each module of the program (for i
 
 Through the scenario file, you can command the various tasks or modules, modify their own parameters, and trigger interesting events. The more you know about the scenario file syntax and modules options, the more you will be able to customize your OpenMATB scenario. See [this tutorial](https://github.com/juliencegarra/OpenMATB/wiki/How-to-build-a-scenario-file) for more information.
 
+### Camera / CAPcorder control
+
+OpenMATB also includes an invisible `camera` plugin for CAPcorder-style LSL camera control. Its default connection and recording settings live in the `[Camera]` section of `config.ini`.
+
+Example scenario:
+
+```txt
+0:00:00;camera;start
+0:02:30;camera;stop
+```
+
+If `autostart=False` in `config.ini`, you can control recording explicitly:
+
+```txt
+0:00:00;camera;start
+0:00:05;camera;start_recording
+0:02:30;camera;stop_recording
+0:02:31;camera;stop
+```
+
+You can also toggle recording from the scenario with the parameter form:
+
+```txt
+0:00:05;camera;recording;True
+0:02:30;camera;recording;False
+```
+
 Once the scenario has ended, information about what happended is stored as comma-separated values (.csv) into the `sessions` directory. This log file contains all that is needed to understand what happened during the scenario and undertake performance calculations. It has the following form:
 
 ```

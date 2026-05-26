@@ -1,0 +1,7 @@
+<h1>Tracking Practice</h1>
+<p>For the next 30 seconds, only the tracking task will be active.</p>
+<p>Keep the cursor inside the target by moving the joystick.</p>
+<p>Keep the cursor as close to the center as possible throughout the practice period.</p>
+<p>The cursor may drift more than you can change it, do your best to counteract.</p>
+<p><img src=tracking.png></p>
+<p>Press SPACE for an example of the tracking task.</p>

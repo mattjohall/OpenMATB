@@ -1,0 +1,10 @@
+<h1>System Monitoring Practice</h1>
+<p>For the next 30 seconds, only the system monitoring task will be active.</p>
+<p>Watch the four scales and two lights. Respond as soon as one fails in red or changes state.</p>
+
+<p>Light One - A. Press A when this light turns off; Light Two - B. Press B when turns red.</p>
+<p>Scales are reset by button C or levers (L1-3) at bottom left of stick. When arrow drifts past red line, press <em>DOWN</em></p>
+
+<p>Focus on monitoring the instruments and responding quickly when something changes.</p>
+<p><img src=sysmon.png></p>
+<p>Press SPACE for an example of the tracking task.</p>

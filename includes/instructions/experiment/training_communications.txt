@@ -1,0 +1,8 @@
+<h1>Communications Practice</h1>
+<p>For the next 30 seconds, only the communications task will be active.</p>
+<p>You can change which radio (up/down) and the frequency (left/right) with the arrow keys.</p>
+<p>Listen for your callsign, select the correct radio, tune it to the announced frequency.</p>
+<p>Once you have reached your input, press <em>ENTER</em>.</p>
+<p>Do not respond to a different call sign.</p>
+<p><img src=COM.png></p>
+<p>Press SPACE to continue.</p>

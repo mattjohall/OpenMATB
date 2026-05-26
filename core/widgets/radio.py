@@ -56,7 +56,7 @@ class Radio(AbstractWidget):
             self.show_arrows()
 
     def get_frequency_string(self, frequency: float) -> str:
-        return f"{self.label.replace('_', ' ')}\t\t\t\t\t\t\t{round(frequency, 1)}"
+        return f"{self.label.replace('_', ' '):<8} {frequency:>5.1f}"
 
     def get_position(self) -> Any:
         return self.pos
