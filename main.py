@@ -39,8 +39,6 @@ from core.constants import PATHS, REPLAY_MODE
 from core.selector import FileSelector
 from core.utils import get_conf_value
 from core.window import Window
-
-
 class OpenMATB:
     def __init__(self) -> None:
         # The MATB window must be borderless (for non-fullscreen mode)
