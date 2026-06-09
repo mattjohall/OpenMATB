@@ -70,12 +70,17 @@ def get_conf_value(section: str, key: str, val_type: Optional[type] = None) -> A
                 % (key, value)
             )
 
-    # Integer values
+    # Integer / selector values
     elif key in ["screen_index"]:
         try:
             value = int(value)
         except (ValueError, TypeError):
-            raise TypeError(_("In config.ini, [%s] parameter must be an integer (not %s)") % (key, value)) from None
+            value = value.strip().lower()
+            if value in ["auto_landscape", "auto"]:
+                return value
+            raise TypeError(
+                _("In config.ini, [%s] parameter must be an integer or auto_landscape (not %s)") % (key, value)
+            ) from None
         else:
             return value
 

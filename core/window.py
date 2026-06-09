@@ -36,9 +36,19 @@ class Window(Window):
         self._height: int = int(screen.height)
         self._fullscreen: bool = get_conf_value("Openmatb", "fullscreen")
 
-        super().__init__(
-            fullscreen=self._fullscreen, width=self._width, height=self._height, vsync=True, *args, **kwargs
-        )
+        window_kwargs: dict[str, Any] = dict(vsync=True, *args, **kwargs)
+        if self._fullscreen:
+            # Use a borderless full-screen-sized window on the target monitor.
+            # This is more reliable than display-mode fullscreen on mixed multi-monitor layouts.
+            window_kwargs["style"] = Window.WINDOW_STYLE_BORDERLESS
+            window_kwargs["resizable"] = False
+            window_kwargs["width"] = self._width
+            window_kwargs["height"] = self._height
+        else:
+            window_kwargs["width"] = self._width
+            window_kwargs["height"] = self._height
+
+        super().__init__(**window_kwargs)
 
         img_path: Any = P["IMG"]
         logo16: Any = image.load(img_path.joinpath("logo16.png"))
@@ -46,6 +56,10 @@ class Window(Window):
         self.set_icon(logo16, logo32)
 
         self.set_size_and_location(screen)  # Postpone multiple monitor support
+        get_logger().log_manual_entry(
+            f"screen_selected:indexed_target x={screen.x} y={screen.y} w={screen.width} h={screen.height}",
+            key="screen",
+        )
         self.set_mouse_visible(REPLAY_MODE)
 
         self.batch: Batch = Batch()
@@ -69,11 +83,17 @@ class Window(Window):
     def get_screen(self) -> Any:
         # Screen definition
         try:
-            screen_index: int = get_conf_value("Openmatb", "screen_index")
+            screen_index: int | str = get_conf_value("Openmatb", "screen_index")
         except (KeyError, TypeError):
             screen_index = 0
 
         screens: list[Any] = get_display().get_screens()
+        if isinstance(screen_index, str) and screen_index in ["auto_landscape", "auto"]:
+            landscape_screens: list[Any] = [screen for screen in screens if screen.width >= screen.height]
+            if len(landscape_screens) > 0:
+                return sorted(landscape_screens, key=lambda screen: (screen.x, screen.y))[-1]
+            return screens[-1]
+
         if screen_index + 1 > len(screens):
             screen: Any = screens[-1]
             from core.error import get_errors

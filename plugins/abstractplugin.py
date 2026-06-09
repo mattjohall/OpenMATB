@@ -428,6 +428,9 @@ class BlockingPlugin(AbstractPlugin):
 
     def create_widgets(self) -> None:
         super().create_widgets()
+        self.slides = list()
+        self.current_slide = None
+        self.slide_display_start = None
         self.go_to_next_slide = True  # So the first slide appears as soon as possible
 
         # Create an input path if relevant
@@ -449,6 +452,7 @@ class BlockingPlugin(AbstractPlugin):
                         self.slides.append("")  # New slide
                     else:
                         self.slides[-1] += line
+            self.slides = [slide for slide in self.slides if slide.strip() != ""]
         else:
             pass  # This should not happen (input_path is checked before the scenario is played)
 
